@@ -4,6 +4,8 @@ class check_mk (
   $package     = 'omd-0.56',
   $site        = 'monitoring',
   $workspace   = '/root/check_mk',
+  $listen_ip   = undef,
+  $listen_port = undef,
 ) {
   class { 'check_mk::install':
     filestore => $filestore,
@@ -18,5 +20,12 @@ class check_mk (
   }
   class { 'check_mk::service':
     require   => Class['check_mk::config'],
+  }
+  if $listen_ip {
+	exec { 'set-listen-port': 
+		command => "/bin/sed -i 's/127\.0\.0\.1\:[0-9]\+/${listen_ip}:${$listen_port}/g' /omd/sites/${site}/etc/apache/listen-port.conf",
+		onlyif  => '/usr/bin/test -n "`grep 7.0.0 /omd/sites/prod/etc/apache/listen-port.conf`"',
+		notify  => Service['omd'],
+	}
   }
 }
